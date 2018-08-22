@@ -6,6 +6,6 @@ using beautifulsoup4
 from nfl_stats.player import QB
 
 tb = QB("Tom Brady")
-tb.set_stats("2017)
+tb.set_stats("2017")
 tb.print_stats()
 ```
