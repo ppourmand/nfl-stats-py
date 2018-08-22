@@ -9,3 +9,6 @@ tb = QB("Tom Brady")
 tb.set_stats("2017")
 tb.print_stats()
 ```
+
+# License
+[MIT License](LICENSE.txt)
