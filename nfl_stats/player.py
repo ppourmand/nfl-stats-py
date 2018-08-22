@@ -190,7 +190,7 @@ class QB:
 
 
 class WR:
-    def __init__(name: str):
+    def __init__(self, name: str):
         self.name: str = name
         self.number: int = 0
         self.team: str = ""
@@ -215,9 +215,48 @@ class WR:
         self.rushing_attempts_per_game: int = 0
         self.touches: int = 0
         self.approximate_value: int = 0
+        self.fumbles: int = 0
 
-    def get_stats(year: str) -> None:
-        pass
+    def set_stats(self, year: str) -> None:
+        first_letter_lastname = list(self.name.split()[1])[0].upper() # lol so convoluted
+        first_four_lastname = self.name.split()[1][0:4]
+        first_two_firstname = self.name.split()[0][0:2]
+        self.year = year
+
+        request_url = "https://www.pro-football-reference.com/players/{}/{}{}00.htm".format(first_letter_lastname,
+                                                                                            first_four_lastname,
+                                                                                            first_two_firstname)
+        
+        try:
+            response = requests.get(request_url)
+            soup = BeautifulSoup(response.text, 'html.parser')
+            stats_for_year = soup.find("tr", {"id": "receiving_and_rushing.{}".format(year)})
+            self.number = stats_for_year.find("td": {"data-stat": "uniform_number"})
+            self.team = stats_for_year.find("td", {"data-stat": "team"}).find('a').text 
+            self.position = stats_for_year.find("td", {"data-stat":"pos"})
+            self.games_played = stats_for_year.find("td", {"data-stat":"g"})
+            self.games_started = stats_for_year.find("td", {"data-stat":"gs"})
+            self.pass_targets = stats_for_year.find("td", {"data-stat":"targets"})
+            self.receptions = stats_for_year.find("td", {"data-stat":"rec"})
+            self.receiving_yards = stats_for_year.find("td", {"data-stat":"rec_yds"})
+            self.yards_per_reception = stats_for_year.find("td", {"data-stat":"rec_yds_per_rec"})
+            self.receiving_touchdowns = stats_for_year.find("td", {"data-stat":"rec_td"})
+            self.longest_reception = stats_for_year.find("td", {"data-stat":"rec_long"})
+            self.receptions_per_game = stats_for_year.find("td", {"data-stat":"rec_per_g"})
+            self.receiving_yards_per_game = stats_for_year.find("td", {"data-stat":"rec_yds_per_g"})
+            self.catch_percentage = stats_for_year.find("td", {"data-stat":"catch_pct"})
+            self.rush_attempts = stats_for_year.find("td", {"data-stat":"rush_att"})
+            self.rushing_yards = stats_for_year.find("td", {"data-stat":"rush_yds"})
+            self.rushing_touchdowns = stats_for_year.find("td", {"data-stat":"rush_td"})
+            self.longest_rushing_attempt = stats_for_year.find("td", {"data-stat":"rush_long"})
+            self.rushing_yards_per_attempt = stats_for_year.find("td", {"data-stat":"rush_yds_per_att"})
+            self.rushing_yards_per_game = stats_for_year.find("td", {"data-stat":"rush_yds_per_g"})
+            self.rushing_attempts_per_game = stats_for_year.find("td", {"data-stat":"rush_att_per_g"})
+            self.touches = stats_for_year.find("td", {"data-stat":"touches"})
+            self.fumbles = stats_for_year.find("td", {"data-stat":"fumbles"})
+            self.approximate_value = stats_for_year.find("td", {"data-stat":"av"})
+        except Exception as e:
+            print(e)
 
 
 class RB:
