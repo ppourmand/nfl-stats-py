@@ -1,5 +1,6 @@
 import os
 import yaml
+from pathlib import Path
 
 from bs4 import BeautifulSoup
 import requests
@@ -37,14 +38,17 @@ class QB:
         :param year: the year to get stats from
         :return: None
         """
+        if self.is_player_stats_cached():
+            return
+
         first_letter_lastname = list(self.name.split()[1])[0].upper() # lol so convoluted
         first_four_lastname = self.name.split()[1][0:4]
         first_two_firstname = self.name.split()[0][0:2]
         self.year = year
 
         request_url = "https://www.pro-football-reference.com/players/{}/{}{}00.htm".format(first_letter_lastname,
-                                                                                         first_four_lastname,
-                                                                                         first_two_firstname)
+                                                                                            first_four_lastname,
+                                                                                            first_two_firstname)
         try:
             response = requests.get(request_url)
             soup = BeautifulSoup(response.text, 'html.parser')
@@ -135,6 +139,20 @@ class QB:
 
         with open("{}/{}.yaml".format(directory, self.year), "w") as file:
             yaml.dump(data, file, default_flow_style=False)
+    
+    def is_player_stats_cached(self) -> bool:
+        """Check if the player + year yaml file exists
+
+        :param year: year for stats:
+        :return: True if the player data for the specified year is cached, False otherwise
+        """
+        player_file = Path("./players/{}_{}/{}.yaml".format(self.name.split()[0], self.name.split()[1], self.year))
+        
+        if player_file.is_file():
+            return True
+        
+        return False
+
 
 class WR:
     def __init__(name: str):
@@ -255,8 +273,7 @@ class TE:
 
 
 
-tom = QB("Tom Brady")
+tom = QB("Russell Wilson")
 tom.set_stats("2017")
 tom.print_stats()
 tom.save_stats_to_yaml()
-
