@@ -1,1 +1,4 @@
 virtual-env/
+.vscode/
+players/
+*.pyc
