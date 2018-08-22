@@ -38,13 +38,17 @@ class QB:
         :param year: the year to get stats from
         :return: None
         """
-        if self.is_player_stats_cached():
-            return
-
         first_letter_lastname = list(self.name.split()[1])[0].upper() # lol so convoluted
         first_four_lastname = self.name.split()[1][0:4]
         first_two_firstname = self.name.split()[0][0:2]
         self.year = year
+        
+        if self.is_player_stats_cached():
+            print(">> Player stats cached for year, setting from cache")
+            self.set_player_stats_from_cache()
+            return
+        
+        print(">> Retrieving data from pro-football-reference.com")
 
         request_url = "https://www.pro-football-reference.com/players/{}/{}{}00.htm".format(first_letter_lastname,
                                                                                             first_four_lastname,
@@ -74,6 +78,9 @@ class QB:
             self.times_sacked = int(stats_for_year.find("td", {"data-stat": "pass_sacked"}).text)
             self.yards_lost_due_to_sacks = int(stats_for_year.find("td", {"data-stat": "pass_sacked_yds"}).text)
             self.approximate_value = int(stats_for_year.find("td", {"data-stat": "av"}).text)
+
+            # save it to its own file for later retrieval
+            self.save_stats_to_yaml()
         except Exception as e:
             print(e)
 
@@ -119,7 +126,7 @@ class QB:
             "position": self.position,
             "team": self.team,
             "games_played": self.games_played,
-            "games_sarted": self.games_started,
+            "games_started": self.games_started,
             "passes_completed": self.passes_completed,
             "passes_attempted": self.passes_attempted,
             "pass_completion_perc": self.pass_completion_percentage,
@@ -143,15 +150,43 @@ class QB:
     def is_player_stats_cached(self) -> bool:
         """Check if the player + year yaml file exists
 
-        :param year: year for stats:
         :return: True if the player data for the specified year is cached, False otherwise
         """
         player_file = Path("./players/{}_{}/{}.yaml".format(self.name.split()[0], self.name.split()[1], self.year))
-        
-        if player_file.is_file():
-            return True
-        
-        return False
+        return player_file.is_file()
+    
+    def set_player_stats_from_cache(self) -> None:
+        """Read the corresponding yaml file and set player stats.
+
+        :return: None
+        """
+        player_file = "./players/{}_{}/{}.yaml".format(self.name.split()[0], self.name.split()[1], self.year)
+
+        with open(player_file, "r") as file:
+            try:
+                yaml_data = yaml.safe_load(file)
+                self.name = yaml_data["name"]
+                self.number = yaml_data["number"]
+                self.team = yaml_data["team"] 
+                self.games_played = yaml_data["games_played"]
+                self.games_started = yaml_data["games_started"]
+                self.passes_completed = yaml_data["passes_completed"]
+                self.passes_attempted = yaml_data["passes_attempted"]
+                self.pass_completion_percentage = yaml_data["pass_completion_perc"]
+                self.yards_gained_by_passing = yaml_data["yards_gained_by_passing"]
+                self.passing_touchdowns = yaml_data["passing_touchdowns"]
+                self.passing_touchdown_percentage = yaml_data["passing_touchdown_perc"]
+                self.interceptions = yaml_data["interceptions"]
+                self.interception_percentage = yaml_data["interception_perc"]
+                self.longest_completed_pass = yaml_data["longest_completed_pass"]
+                self.yards_gained_per_pass_attempt = yaml_data["yards_gained_per_pass_attempt"]
+                self.yards_gained_per_pass_completion = yaml_data["yards_gained_per_pass_completion"]
+                self.qb_rating = yaml_data["qb_rating"]
+                self.times_sacked = yaml_data["times_sacked"]
+                self.yards_lost_due_to_sacks = yaml_data["yards_lost_due_to_sacks"]
+                self.approximate_value = yaml_data["approximate_value"]
+            except yaml.YAMLError as e:
+                print(e)
 
 
 class WR:
@@ -273,7 +308,6 @@ class TE:
 
 
 
-tom = QB("Russell Wilson")
-tom.set_stats("2017")
+tom = QB("Tom Brady")
+tom.set_stats("2016")
 tom.print_stats()
-tom.save_stats_to_yaml()
