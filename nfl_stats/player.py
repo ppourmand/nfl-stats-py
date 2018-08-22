@@ -305,9 +305,3 @@ class TE:
 
     def get_stats(year: str) -> None:
         pass
-
-
-
-tom = QB("Tom Brady")
-tom.set_stats("2016")
-tom.print_stats()
