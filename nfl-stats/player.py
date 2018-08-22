@@ -1,3 +1,6 @@
+import os
+import yaml
+
 from bs4 import BeautifulSoup
 import requests
 
@@ -101,7 +104,38 @@ class QB:
         :return: None
         """
 
-        
+        # if the directory for proper organizatio doesn't exist, make it
+        directory = "./players/{}_{}/".format(self.name.split()[0], self.name.split()[1]) 
+        if not os.path.exists(directory):
+            os.makedirs(directory)        
+
+        data = {
+            "name": self.name,
+            "number": self.number,
+            "position": self.position,
+            "team": self.team,
+            "games_played": self.games_played,
+            "games_sarted": self.games_started,
+            "passes_completed": self.passes_completed,
+            "passes_attempted": self.passes_attempted,
+            "pass_completion_perc": self.pass_completion_percentage,
+            "yards_gained_by_passing": self.yards_gained_by_passing,
+            "passing_touchdowns": self.passing_touchdowns,
+            "passing_touchdown_perc": self.passing_touchdown_percentage,
+            "interceptions": self.interceptions,
+            "interception_perc": self.interception_percentage,
+            "longest_completed_pass": self.longest_completed_pass,
+            "yards_gained_per_pass_attempt": self.yards_gained_per_pass_attempt,
+            "yards_gained_per_pass_completion": self.yards_gained_per_pass_completion,
+            "qb_rating": self.qb_rating,
+            "times_sacked": self.times_sacked,
+            "yards_lost_due_to_sacks":  self.yards_lost_due_to_sacks,
+            "approximate_value": self.approximate_value
+        }
+
+        with open("{}/{}.yaml".format(directory, self.year), "w") as file:
+            yaml.dump(data, file, default_flow_style=False)
+
 class WR:
     def __init__(name: str):
         self.name: str = name
@@ -131,6 +165,7 @@ class WR:
 
     def get_stats(year: str) -> None:
         pass
+
 
 class RB:
     def __init__(name: str):
@@ -223,4 +258,5 @@ class TE:
 tom = QB("Tom Brady")
 tom.set_stats("2017")
 tom.print_stats()
+tom.save_stats_to_yaml()
 
