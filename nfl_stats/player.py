@@ -31,12 +31,16 @@ class QB:
         self.year = ""
 
     def set_stats(self, year:str ) -> None:
-        """Gets html of player site, sets values for the year
+        """
+        Gets the statistics from the scraped site and sets appriopiate variables.
 
-        TODO: have better exception handling for requests/bs4
+        TODO: 
+            - have better exception handling for requests/bs4
 
-        :param year: the year to get stats from
-        :return: None
+        Parameters:
+            year - the year to get statistics for
+        Returns:
+            None
         """
         first_letter_lastname = list(self.name.split()[1])[0].upper() # lol so convoluted
         first_four_lastname = self.name.split()[1][0:4]
@@ -109,14 +113,14 @@ class QB:
         print("Approximate value: {}".format(self.approximate_value))
 
     def save_stats_to_yaml(self) -> None:
-        """Once we have a queried for a years stats, lets save it so we dont spam the hell out of
-        their website.
-
-        :return: None
         """
+        Saves statistical data to a yaml file
 
-        # if the directory for proper organizatio doesn't exist, make it
-        directory = "./players/{}_{}/".format(self.name.split()[0], self.name.split()[1]) 
+        Returns:
+            - None
+        """
+        # if the directory for proper organization doesn't exist, make it
+        directory = "./players/QB/{}_{}/".format(self.name.split()[0], self.name.split()[1]) 
         if not os.path.exists(directory):
             os.makedirs(directory)        
 
@@ -148,19 +152,23 @@ class QB:
             yaml.dump(data, file, default_flow_style=False)
     
     def is_player_stats_cached(self) -> bool:
-        """Check if the player + year yaml file exists
-
-        :return: True if the player data for the specified year is cached, False otherwise
         """
-        player_file = Path("./players/{}_{}/{}.yaml".format(self.name.split()[0], self.name.split()[1], self.year))
+        Checks if the player + year yaml file exists
+
+        Returns:
+            - bool: True if player file exists, False otherwise
+        """
+        player_file = Path("./players/QB/{}_{}/{}.yaml".format(self.name.split()[0], self.name.split()[1], self.year))
         return player_file.is_file()
     
     def set_player_stats_from_cache(self) -> None:
-        """Read the corresponding yaml file and set player stats.
-
-        :return: None
         """
-        player_file = "./players/{}_{}/{}.yaml".format(self.name.split()[0], self.name.split()[1], self.year)
+        Reads the corresponding yaml file and set player stats.
+
+        Returns:
+            - None
+        """
+        player_file = "./players/QB/{}_{}/{}.yaml".format(self.name.split()[0], self.name.split()[1], self.year)
 
         with open(player_file, "r") as file:
             try:
@@ -205,23 +213,37 @@ class WR:
         self.longest_reception: int = 0
         self.receptions_per_game: float = 0.0
         self.receiving_yards_per_game: float = 0.0
-        self.catch_percentage: float = 0.0
         self.rush_attempts: int = 0
         self.rushing_yards: int = 0
         self.rushing_touchdowns: int = 0
         self.longest_rushing_attempt: int = 0
-        self.rushing_yards_per_attempt: int = 0
-        self.rushing_yards_per_game: int = 0
-        self.rushing_attempts_per_game: int = 0
+        self.rushing_yards_per_attempt: float = 0.0
+        self.rushing_yards_per_game: float = 0.0
+        self.rushing_attempts_per_game: float = 0.0
         self.touches: int = 0
         self.approximate_value: int = 0
         self.fumbles: int = 0
 
     def set_stats(self, year: str) -> None:
+        """
+        Given the year, scrape pro-football-reference to get stats
+
+        Parameters:
+            year - the year to get statistics for
+        Returns:
+            - None
+        """
         first_letter_lastname = list(self.name.split()[1])[0].upper() # lol so convoluted
         first_four_lastname = self.name.split()[1][0:4]
         first_two_firstname = self.name.split()[0][0:2]
         self.year = year
+
+        if self.is_player_stats_cached():
+            print(">> Player stats cached for year, setting from cache")
+            self.set_stats_from_cache()
+            return
+
+        print(">> Retrieving data from pro-football-reference.com")
 
         request_url = "https://www.pro-football-reference.com/players/{}/{}{}00.htm".format(first_letter_lastname,
                                                                                             first_four_lastname,
@@ -231,32 +253,137 @@ class WR:
             response = requests.get(request_url)
             soup = BeautifulSoup(response.text, 'html.parser')
             stats_for_year = soup.find("tr", {"id": "receiving_and_rushing.{}".format(year)})
-            self.number = stats_for_year.find("td": {"data-stat": "uniform_number"})
+            self.number = int(stats_for_year.find("td", {"data-stat": "uniform_number"}).text)
             self.team = stats_for_year.find("td", {"data-stat": "team"}).find('a').text 
-            self.position = stats_for_year.find("td", {"data-stat":"pos"})
-            self.games_played = stats_for_year.find("td", {"data-stat":"g"})
-            self.games_started = stats_for_year.find("td", {"data-stat":"gs"})
-            self.pass_targets = stats_for_year.find("td", {"data-stat":"targets"})
-            self.receptions = stats_for_year.find("td", {"data-stat":"rec"})
-            self.receiving_yards = stats_for_year.find("td", {"data-stat":"rec_yds"})
-            self.yards_per_reception = stats_for_year.find("td", {"data-stat":"rec_yds_per_rec"})
-            self.receiving_touchdowns = stats_for_year.find("td", {"data-stat":"rec_td"})
-            self.longest_reception = stats_for_year.find("td", {"data-stat":"rec_long"})
-            self.receptions_per_game = stats_for_year.find("td", {"data-stat":"rec_per_g"})
-            self.receiving_yards_per_game = stats_for_year.find("td", {"data-stat":"rec_yds_per_g"})
-            self.catch_percentage = stats_for_year.find("td", {"data-stat":"catch_pct"})
-            self.rush_attempts = stats_for_year.find("td", {"data-stat":"rush_att"})
-            self.rushing_yards = stats_for_year.find("td", {"data-stat":"rush_yds"})
-            self.rushing_touchdowns = stats_for_year.find("td", {"data-stat":"rush_td"})
-            self.longest_rushing_attempt = stats_for_year.find("td", {"data-stat":"rush_long"})
-            self.rushing_yards_per_attempt = stats_for_year.find("td", {"data-stat":"rush_yds_per_att"})
-            self.rushing_yards_per_game = stats_for_year.find("td", {"data-stat":"rush_yds_per_g"})
-            self.rushing_attempts_per_game = stats_for_year.find("td", {"data-stat":"rush_att_per_g"})
-            self.touches = stats_for_year.find("td", {"data-stat":"touches"})
-            self.fumbles = stats_for_year.find("td", {"data-stat":"fumbles"})
-            self.approximate_value = stats_for_year.find("td", {"data-stat":"av"})
+            self.position = stats_for_year.find("td", {"data-stat":"pos"}).text
+            self.games_played = int(stats_for_year.find("td", {"data-stat":"g"}).text)
+            self.games_started = int(stats_for_year.find("td", {"data-stat":"gs"}).text)
+            self.pass_targets = int(stats_for_year.find("td", {"data-stat":"targets"}).text)
+            self.receptions = int(stats_for_year.find("td", {"data-stat":"rec"}).text)
+            self.receiving_yards = int(stats_for_year.find("td", {"data-stat":"rec_yds"}).text)
+            self.yards_per_reception = float(stats_for_year.find("td", {"data-stat":"rec_yds_per_rec"}).text)
+            self.receiving_touchdowns = int(stats_for_year.find("td", {"data-stat":"rec_td"}).text)
+            self.longest_reception = int(stats_for_year.find("td", {"data-stat":"rec_long"}).text)
+            self.receptions_per_game = float(stats_for_year.find("td", {"data-stat":"rec_per_g"}).text)
+            self.receiving_yards_per_game = float(stats_for_year.find("td", {"data-stat":"rec_yds_per_g"}).text)
+            self.rush_attempts = int(stats_for_year.find("td", {"data-stat":"rush_att"}).text)
+            self.rushing_yards = int(stats_for_year.find("td", {"data-stat":"rush_yds"}).text)
+            self.rushing_touchdowns = int(stats_for_year.find("td", {"data-stat":"rush_td"}).text)
+            self.longest_rushing_attempt = int(stats_for_year.find("td", {"data-stat":"rush_long"}).text)
+            self.rushing_yards_per_attempt = float(stats_for_year.find("td", {"data-stat":"rush_yds_per_att"}).text)
+            self.rushing_yards_per_game = float(stats_for_year.find("td", {"data-stat":"rush_yds_per_g"}).text)
+            self.rushing_attempts_per_game = float(stats_for_year.find("td", {"data-stat":"rush_att_per_g"}).text)
+            self.touches = int(stats_for_year.find("td", {"data-stat":"touches"}).text)
+            self.fumbles = int(stats_for_year.find("td", {"data-stat":"fumbles"}).text)
+            self.approximate_value = int(stats_for_year.find("td", {"data-stat":"av"}).text)
+            self.save_stats_to_yaml()
         except Exception as e:
             print(e)
+    
+    def save_stats_to_yaml(self) -> None:
+        """
+        Saves data scraped to a yaml file for caching.
+
+        Returns:
+            - None
+        """
+        # if the directory for proper organization doesn't exist, make it
+        directory = "./players/WR/{}_{}/".format(self.name.split()[0], self.name.split()[1]) 
+        if not os.path.exists(directory):
+            os.makedirs(directory)     
+
+        data = {
+            "name": self.name,
+            "number": self.number,
+            "team": self.team,
+            "position": self.position,
+            "games_played": self.games_played,
+            "games_started": self.games_started,
+            "pass_targets": self.pass_targets,
+            "receptions": self.receptions,
+            "receiving_yards": self.receiving_yards,
+            "yards_per_reception": self.yards_per_reception,
+            "receiving_touchdowns": self.receiving_touchdowns,
+            "longest_reception": self.longest_reception,
+            "receptions_per_game": self.receptions_per_game,
+            "receiving_yards_per_game": self.receiving_yards_per_game,
+            "rush_attempts": self.rush_attempts,
+            "rushing_yards": self.rushing_yards,
+            "rushing_touchdowns": self.rushing_touchdowns,
+            "longest_rushing_attempt": self.longest_rushing_attempt,
+            "rushing_yards_per_attempt": self.rushing_yards_per_attempt,
+            "rushing_yards_per_game": self.rushing_yards_per_game,
+            "rushing_attempts_per_game": self.rushing_attempts_per_game,
+            "touches": self.touches,
+            "approximate_value": self.approximate_value,
+            "fumbles": self.fumbles
+        } 
+
+        with open("{}/{}.yaml".format(directory, self.year), "w") as file:
+            yaml.dump(data, file, default_flow_style=False)
+        
+    def set_stats_from_cache(self) -> None:
+        player_file = "./players/WR/{}_{}/{}.yaml".format(self.name.split()[0], self.name.split()[1], self.year)
+
+        with open(player_file, "r") as file:
+            try:
+                yaml_data = yaml.safe_load(file)
+                self.name = yaml_data["name"]
+                self.number = yaml_data["number"]
+                self.team = yaml_data["team"]
+                self.position = yaml_data["position"]
+                self.games_played = yaml_data["games_played"]
+                self.games_started = yaml_data["games_started"]
+                self.pass_targets = yaml_data["pass_targets"]
+                self.receptions = yaml_data["receptions"]
+                self.receiving_yards = yaml_data["receiving_yards"]
+                self.yards_per_reception = yaml_data["yards_per_reception"]
+                self.receiving_touchdowns = yaml_data["receiving_touchdowns"]
+                self.longest_reception = yaml_data["longest_reception"]
+                self.receptions_per_game = yaml_data["receptions_per_game"]
+                self.receiving_yards_per_game = yaml_data["receiving_yards_per_game"]
+                self.rush_attempts = yaml_data["rush_attempts"]
+                self.rushing_yards = yaml_data["rushing_yards"]
+                self.rushing_touchdowns = yaml_data["rushing_touchdowns"]
+                self.longest_rushing_attempt = yaml_data["longest_rushing_attempt"]
+                self.rushing_yards_per_attempt = yaml_data["rushing_yards_per_attempt"]
+                self.rushing_yards_per_game = yaml_data["rushing_yards_per_game"]
+                self.rushing_attempts_per_game = yaml_data["rushing_attempts_per_game"]
+                self.touches = yaml_data["touches"]
+                self.approximate_value = yaml_data["approximate_value"]
+                self.fumbles = yaml_data["fumbles"]
+            except yaml.YAMLError as e:
+                print(e)
+
+    def print_stats(self) -> None:
+        print(self.name)
+        print(self.number)
+        print(self.team)
+        print(self.position)
+        print(self.games_played)
+        print(self.games_started)
+        print(self.pass_targets)
+        print(self.receptions)
+        print(self.receiving_yards)
+        print(self.yards_per_reception)
+        print(self.receiving_touchdowns)
+        print(self.longest_reception)
+        print(self.receptions_per_game)
+        print(self.receiving_yards_per_game)
+        print(self.rush_attempts)
+        print(self.rushing_yards)
+        print(self.rushing_touchdowns)
+        print(self.longest_rushing_attempt)
+        print(self.rushing_yards_per_attempt)
+        print(self.rushing_yards_per_game)
+        print(self.rushing_attempts_per_game)
+        print(self.touches)
+        print(self.approximate_value)
+        print(self.fumbles)
+
+    def is_player_stats_cached(self) -> bool:
+        player_file = Path("./players/WR/{}_{}/{}.yaml".format(self.name.split()[0], self.name.split()[1], self.year))
+        return player_file.is_file()
 
 
 class RB:
