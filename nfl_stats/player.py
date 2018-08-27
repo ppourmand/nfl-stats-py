@@ -412,8 +412,21 @@ class RB:
         self.catch_percentage: float = 0.0
         self.approximate_value: int = 0
 
-    def get_stats(year: str) -> None:
+    def set_stats(year: str) -> None:
         pass
+    
+    def save_stats(self) -> None:
+        pass
+    
+    def set_stats_from_cache(self) -> None:
+        pass
+    
+    def is_player_stats_cached(self) -> bool:
+        pass
+    
+    def print_stats(self) -> None:
+        pass
+
 
 class K:
     def __init__(name: str):
