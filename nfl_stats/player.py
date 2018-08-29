@@ -387,7 +387,7 @@ class WR:
 
 
 class RB:
-    def __init__(name: str):
+    def __init__(self, name: str):
         self.name: str = name
         self.number: int = 0
         self.team: str = ""
@@ -398,34 +398,166 @@ class RB:
         self.rushing_yards: int = 0
         self.rushing_touchdowns: int = 0
         self.longest_rushing_attempt: int = 0
-        self.rushing_yards_per_attempt: int = 0
-        self.rushing_yards_per_game: int = 0
-        self.rushing_attempts_per_game: int = 0
+        self.rushing_yards_per_attempt: float = 0.0
+        self.rushing_yards_per_game: float = 0.0
+        self.rushing_attempts_per_game: float = 0.0
         self.pass_targets: int = 0
         self.receptions: int = 0
         self.receiving_yards: int = 0
-        self.receiving_yards_per_reception: int = 0
+        self.receiving_yards_per_reception: float = 0.0
         self.receiving_touchdowns: int = 0
         self.longest_reception: int = 0
-        self.receptions_per_game: int = 0
-        self.receiving_yards_per_game: int = 0
-        self.catch_percentage: float = 0.0
+        self.receptions_per_game: float = 0.0
+        self.receiving_yards_per_game: float = 0.0
         self.approximate_value: int = 0
+        self.fumbles: int = 0
 
-    def set_stats(year: str) -> None:
-        pass
+    def set_stats(self, year: str) -> None:
+        """
+        Given the year, scrape pro-football-reference to get stats
+
+        Parameters:
+            year - the year to get statistics for
+        Returns:
+            - None
+        """
+        first_letter_lastname = list(self.name.split()[1])[0].upper() # lol so convoluted
+        first_four_lastname = self.name.split()[1][0:4]
+        first_two_firstname = self.name.split()[0][0:2]
+        self.year = year
+
+        if self.is_player_stats_cached():
+            print(">> Player stats cached for year, setting from cache")
+            self.set_stats_from_cache()
+            return
+
+        print(">> Retrieving data from pro-football-reference.com")
+
+        request_url = "https://www.pro-football-reference.com/players/{}/{}{}00.htm".format(first_letter_lastname,
+                                                                                            first_four_lastname,
+                                                                                            first_two_firstname)
+        
+        try:
+            response = requests.get(request_url)
+            soup = BeautifulSoup(response.text, 'html.parser')
+            stats_for_year = soup.find("tr", {"id": "rushing_and_receiving.{}".format(year)})
+            self.number = int(stats_for_year.find("td", {"data-stat": "uniform_number"}).text)
+            self.team = stats_for_year.find("td", {"data-stat": "team"}).find('a').text 
+            self.games_played = int(stats_for_year.find("td", {"data-stat": "g"}).text)
+            self.games_started = int(stats_for_year.find("td", {"data-stat": "gs"}).text)
+            self.rushing_attempts = int(stats_for_year.find("td", {"data-stat": "rush_att"}).text)
+            self.rushing_yards = int(stats_for_year.find("td", {"data-stat": "rush_yds"}).text)
+            self.rushing_touchdowns = int(stats_for_year.find("td", {"data-stat": "rush_td"}).text)
+            self.longest_rushing_attempt = int(stats_for_year.find("td", {"data-stat": "rush_long"}).text)
+            self.rushing_yards_per_attempt = float(stats_for_year.find("td", {"data-stat": "rush_yds_per_att"}).text)
+            self.rushing_yards_per_game = float(stats_for_year.find("td", {"data-stat": "rush_yds_per_g"}).text)
+            self.rushing_attempts_per_game = float(stats_for_year.find("td", {"data-stat": "rush_att_per_g"}).text)
+            self.pass_targets = int(stats_for_year.find("td", {"data-stat": "targets"}).text)
+            self.receptions = int(stats_for_year.find("td", {"data-stat": "rec"}).text)
+            self.receiving_yards = int(stats_for_year.find("td", {"data-stat": "rec_yds"}).text)
+            self.receiving_yards_per_reception = float(stats_for_year.find("td", {"data-stat": "rec_yds_per_rec"}).text)
+            self.receiving_touchdowns = int(stats_for_year.find("td", {"data-stat": "rec_td"}).text)
+            self.longest_reception = int(stats_for_year.find("td", {"data-stat": "rec_long"}).text)
+            self.receptions_per_game = float(stats_for_year.find("td", {"data-stat": "rec_per_g"}).text)
+            self.receiving_yards_per_game = float(stats_for_year.find("td", {"data-stat": "rec_yds_per_g"}).text)
+            self.approximate_value = int(stats_for_year.find("td", {"data-stat": "av"}).text)
+            self.fumbles = int(stats_for_year.find("td", {"data-stat": "fumbles"}).text)
+            self.save_stats()
+        except Exception as e:
+            print(e)
     
     def save_stats(self) -> None:
-        pass
+        directory = "./players/RB/{}_{}/".format(self.name.split()[0], self.name.split()[1]) 
+        if not os.path.exists(directory):
+            os.makedirs(directory)    
+
+        data = {
+            "name": self.name,
+            "number": self.number,
+            "team": self.team,
+            "games_played": self.games_played,
+            "games_started": self.games_started,
+            "rushing_attempts": self.rushing_attempts,
+            "rushing_yards": self.rushing_yards,
+            "rushing_touchdowns": self.rushing_touchdowns,
+            "longest_rushing_attempt": self.longest_rushing_attempt,
+            "rushing_yards_per_attempt": self.rushing_yards_per_attempt,
+            "rushing_yards_per_game": self.rushing_yards_per_game,
+            "rushing_attempts_per_game": self.rushing_attempts_per_game,
+            "pass_targets": self.pass_targets,
+            "receptions": self.receptions,
+            "receiving_yards": self.receiving_yards,
+            "receiving_yards_per_reception": self.receiving_yards_per_reception,
+            "receiving_touchdowns": self.receiving_touchdowns,
+            "longest_reception": self.longest_reception,
+            "receptions_per_game": self.receptions_per_game,
+            "receiving_yards_per_game": self.receiving_yards_per_game,
+            "approximate_value": self.approximate_value,
+            "fumbles": self.fumbles
+        }
+        
+        with open("{}/{}.yaml".format(directory, self.year), "w") as file:
+            yaml.dump(data, file, default_flow_style=False)
     
     def set_stats_from_cache(self) -> None:
-        pass
+        player_file = "./players/RB/{}_{}/{}.yaml".format(self.name.split()[0], self.name.split()[1], self.year)
+        
+        with open(player_file, "r") as file:
+            try:
+                yaml_data = yaml.safe_load(file)
+                self.number = yaml_data["number"]
+                self.team = yaml_data["team"]
+                self.games_played = yaml_data["games_played"] 
+                self.games_started = yaml_data["games_started"] 
+                self.rushing_attempts = yaml_data["rushing_attempts"] 
+                self.rushing_yards = yaml_data["rushing_yards"] 
+                self.rushing_touchdowns = yaml_data["rushing_touchdowns"] 
+                self.longest_rushing_attempt = yaml_data["longest_rushing_attempt"] 
+                self.rushing_yards_per_attempt = yaml_data["rushing_yards_per_attempt"] 
+                self.rushing_yards_per_game = yaml_data["rushing_yards_per_game"] 
+                self.rushing_attempts_per_game = yaml_data["rushing_attempts_per_game"] 
+                self.pass_targets = yaml_data["pass_targets"] 
+                self.receptions = yaml_data["receptions"] 
+                self.receiving_yards = yaml_data["receiving_yards"] 
+                self.receiving_yards_per_reception = yaml_data["receiving_yards_per_reception"] 
+                self.receiving_touchdowns = yaml_data["receiving_touchdowns"] 
+                self.longest_reception = yaml_data["longest_reception"] 
+                self.receptions_per_game = yaml_data["receptions_per_game"] 
+                self.receiving_yards_per_game = yaml_data["receiving_yards_per_game"] 
+                self.approximate_value = yaml_data["approximate_value"] 
+                self.fumbles = yaml_data["fumbles"] 
+            except yaml.YAMLError as e:
+                print(e)
     
     def is_player_stats_cached(self) -> bool:
-        pass
+        player_file = Path("./players/RB/{}_{}/{}.yaml".format(self.name.split()[0], self.name.split()[1], self.year))
+        return player_file.is_file()
     
     def print_stats(self) -> None:
-        pass
+        print("Year: {}".format(self.year))
+        print("Name: {}".format(self.name))
+        print("Number: {}".format(self.number))
+        print("Position : {}".format(self.position))
+        print("Team: {}".format(self.team))
+        print("Games played: {}".format(self.games_played))
+        print("Games started: {}".format(self.games_started))
+        print("Rushing attempts: {}".format(self.rushing_attempts))
+        print("Rushing yards: {}".format(self.rushing_yards))
+        print("Rushing touchdowns: {}".format(self.rushing_touchdowns))
+        print("Longest rushing attempt: {}".format(self.longest_rushing_attempt))
+        print("Rushing yards per attempt: {}".format(self.rushing_yards_per_attempt))
+        print("Rushing yards per game: {}".format(self.rushing_yards_per_game))
+        print("Pass targets: {}".format(self.pass_targets))
+        print("Receptions: {}".format(self.receptions))
+        print("Receiving yards: {}".format(self.receiving_yards))
+        print("Receiving yards per reception: {}".format(self.receiving_yards_per_reception))
+        print("Receiving touchdowns: {}".format(self.receiving_touchdowns))
+        print("Longest reception: {}".format(self.longest_reception))
+        print("Receptions per game: {}".format(self.receptions_per_game))
+        print("Receiving yards per game: {}".format(self.receiving_yards_per_game))
+        print("Approximate value: {}".format(self.approximate_value))
+        print("Fumbles: {}".format(self.fumbles))
+         
 
 
 class K:
