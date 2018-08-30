@@ -579,14 +579,45 @@ class K:
         self.longest_field_goal_made: int = 0
         self.total_field_goals_attmpted: int = 0
         self.total_field_goals_made: int = 0
-        self.total_field_goal_percentage: float = 0.0
         self.extra_points_attempted: int = 0
         self.extra_points_made: int = 0
-        self.extra_points_percentage: float = 0.0
         self.approximate_value: int = 0
-
-    def get_stats(year: str) -> None:
+    
+    def set_stats(self) -> None:
         pass
+    
+    def save_stats(self) -> None:
+        pass
+    
+    def set_stats_from_cache(self) -> None:
+        pass
+    
+    def is_player_stats_cached(self) -> bool:
+        player_file = Path("./players/K/{}_{}/{}.yaml".format(self.name.split()[0], self.name.split()[1], self.year))
+        return player_file.is_file()
+
+    def print_stats(self) -> None:
+        print("Year: {}".format(self.year))
+        print("Name: {}".format(self.name))
+        print("Number: {}".format(self.number))
+        print("Team: {}".format(self.team))
+        print("Position: {}".format(self.position))
+        print("Games played: {}".format(self.games_played))
+        print("Games started: {}".format(self.games_started))
+        print("Field goal attempts (20-29): {}".format(self.field_goal_attempts_20_to_29))
+        print("Field goals made (20-29): {}".format(self.field_goals_made_20_to_29))
+        print("Field goal attempts (30-39): {}".format(self.field_goal_attempts_30_to_39))
+        print("Field goals made (30-39): {}".format(self.fields_goals_made_30_to_39))
+        print("Field goal attempts (40-49): {}".format(self.field_goal_attempts_40_to_49))
+        print("Field goals made (40-49): {}".format(self.field_goals_made_40_to_49))
+        print("Field goal attempts (50+): {}".format(self.field_goal_attempts_50_plus))
+        print("Field goals made (50+): {}".format(self.field_goals_made_50_plus))
+        print("Longest field goal: {} yd".format(self.longest_field_goal_made))
+        print("Total field goals attempted: {}".format(self.total_field_goals_attmpted))
+        print("Total field goals mdae: {}".format(self.total_field_goals_made))
+        print("Extra points attempted: {}".format(self.extra_points_attempted))
+        print("Extra points made: {}".format(self.extra_points_made))
+        print("Approximate value: {}".format(self.approximate_value))
 
 class TE:
     def __init__(name: str):
