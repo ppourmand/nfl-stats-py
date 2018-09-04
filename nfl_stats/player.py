@@ -732,10 +732,10 @@ class TE:
         first_two_firstname = self.name.split()[0][0:2]
         self.year = year
 
-        # if self.is_player_stats_cached():
-        #     print(">> Player stats cached for year, setting from cache")
-        #     self.set_stats_from_cache()
-        #     return
+        if self.is_player_stats_cached():
+            print(">> Player stats cached for year, setting from cache")
+            self.set_stats_from_cache()
+            return
 
         print(">> Retrieving data from pro-football-reference.com")
 
@@ -759,6 +759,7 @@ class TE:
             self.all_purpose_yards = int(stats_for_year.find("td", {"data-stat": "all_purpose_yds"}).text)
             self.fumbles = int(stats_for_year.find("td", {"data-stat": "fumbles"}).text)
             self.approximate_value =  int(stats_for_year.find("td", {"data-stat": "av"}).text)
+            self.save_stats()
         except Exception as e:
             print(e)
     
@@ -788,7 +789,26 @@ class TE:
             yaml.dump(data, file, default_flow_style=False)
     
     def set_stats_from_cache(self) -> None:
-        pass
+        player_file = "./players/TE/{}_{}/{}.yaml".format(self.name.split()[0], self.name.split()[1], self.year)
+        
+        with open(player_file, "r") as file:
+            try:
+                yaml_data = yaml.safe_load(file)
+                self.number = yaml_data["number"]
+                self.team = yaml_data["team"]
+                self.games_played = yaml_data["games_played"] 
+                self.games_started = yaml_data["games_started"] 
+                self.targets = yaml_data["targets"] 
+                self.receptions = yaml_data["receptions"] 
+                self.receiving_yards = yaml_data["receiving_yards"] 
+                self.receiving_touchdowns = yaml_data["receiving_touchdowns"] 
+                self.longest_reception = yaml_data["longest_reception"] 
+                self.touches = yaml_data["touches"] 
+                self.all_purpose_yards = yaml_data["all_purpose_yards"] 
+                self.fumbles = yaml_data["fumbles"] 
+                self.approximate_value = yaml_data["approximate_value"] 
+            except yaml.YAMLError as e:
+                print(e)
 
     def is_player_stats_cached(self) -> bool:
         player_file = Path("./players/TE/{}_{}/{}.yaml".format(self.name.split()[0], self.name.split()[1], self.year))
