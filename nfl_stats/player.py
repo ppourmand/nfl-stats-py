@@ -791,7 +791,8 @@ class TE:
         pass
 
     def is_player_stats_cached(self) -> bool:
-        pass
+        player_file = Path("./players/TE/{}_{}/{}.yaml".format(self.name.split()[0], self.name.split()[1], self.year))
+        return player_file.is_file()
     
     def print_stats(self) -> None:
         print("Year: {}".format(self.year))
