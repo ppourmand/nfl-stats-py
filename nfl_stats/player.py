@@ -709,7 +709,7 @@ class K:
         print("Approximate value: {}".format(self.approximate_value))
 
 class TE:
-    def __init__(name: str):
+    def __init__(self, name: str):
         self.name: str = name
         self.number: int = 0
         self.team: str = ""
@@ -719,20 +719,75 @@ class TE:
         self.targets: int = 0
         self.receptions: int = 0
         self.receiving_yards: int = 0
-        self.receiving_yards_per_reception: float = 0.0
         self.receiving_touchdowns: int = 0
         self.longest_reception: int = 0
-        self.receptions_per_game: float = 0.0
-        self.receiving_yards_per_game: float = 0.0
-        self.catch_percentage: float = 0.0
         self.rushing_attempts: int = 0
         self.rushing_yards: int = 0
         self.rushing_touchdowns: int = 0
-        self.longest_rushing_attempt: int = 0
         self.touches: int = 0
         self.all_purpose_yards: int = 0
         self.fumbles: int = 0
         self.approximate_value: int = 0
 
-    def get_stats(year: str) -> None:
+    def set_stats(self, year:str) -> None:
+        first_letter_lastname = list(self.name.split()[1])[0].upper() # lol so convoluted
+        first_four_lastname = self.name.split()[1][0:4]
+        first_two_firstname = self.name.split()[0][0:2]
+        self.year = year
+
+        # if self.is_player_stats_cached():
+        #     print(">> Player stats cached for year, setting from cache")
+        #     self.set_stats_from_cache()
+        #     return
+
+        print(">> Retrieving data from pro-football-reference.com")
+
+        request_url = "https://www.pro-football-reference.com/players/{}/{}{}00.htm".format(first_letter_lastname,
+                                                                                            first_four_lastname,
+                                                                                            first_two_firstname)
+        try:
+            response = requests.get(request_url)
+            soup = BeautifulSoup(response.text, 'html.parser')
+            stats_for_year = soup.find("tr", {"id": "receiving_and_rushing.{}".format(year)})
+            self.number = int(stats_for_year.find("td", {"data-stat": "uniform_number"}).text)
+            self.team = stats_for_year.find("td", {"data-stat": "team"}).find('a').text 
+            self.games_played = int(stats_for_year.find("td", {"data-stat": "g"}).text)
+            self.games_started = int(stats_for_year.find("td", {"data-stat": "gs"}).text)
+            self.targets = int(stats_for_year.find("td", {"data-stat": "targets"}).text)
+            self.receptions = int(stats_for_year.find("td", {"data-stat": "rec"}).text)
+            self.receiving_yards = int(stats_for_year.find("td", {"data-stat": "rec_yds"}).text)
+            self.receiving_touchdowns = int(stats_for_year.find("td", {"data-stat": "rec_td"}).text)
+            self.longest_reception = int(stats_for_year.find("td", {"data-stat": "rec_long"}).text)
+            self.touches = int(stats_for_year.find("td", {"data-stat": "touches"}).text)
+            self.all_purpose_yards = int(stats_for_year.find("td", {"data-stat": "all_purpose_yds"}).text)
+            self.fumbles = int(stats_for_year.find("td", {"data-stat": "fumbles"}).text)
+            self.approximate_value =  int(stats_for_year.find("td", {"data-stat": "av"}).text)
+        except Exception as e:
+            print(e)
+    
+    def save_stats(self) -> None:
         pass
+    
+    def set_stats_from_cache(self) -> None:
+        pass
+
+    def is_player_stats_cached(self) -> bool:
+        pass
+    
+    def print_stats(self) -> None:
+        print("Year: {}".format(self.year))
+        print("Name: {}".format(self.name))
+        print("Number: {}".format(self.number))
+        print("Team: {}".format(self.team))
+        print("Position: {}".format(self.position))
+        print("Games played: {}".format(self.games_played))
+        print("Games started: {}".format(self.games_started))
+        print("Targets: {}".format(self.targets)) 
+        print("Receptions: {}".format(self.receptions)) 
+        print("Receiving yards: {}".format(self.receiving_yards)) 
+        print("Receiving touchdowns: {}".format(self.receiving_touchdowns)) 
+        print("Longest reception: {}".format(self.longest_reception)) 
+        print("Touches: {}".format(self.touches)) 
+        print("All purpose yards: {}".format(self.all_purpose_yards)) 
+        print("Fumbles: {}".format(self.fumbles)) 
+        print("Approximate Value: {}".format(self.approximate_value)) 
