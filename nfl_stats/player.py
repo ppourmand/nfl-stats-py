@@ -721,9 +721,6 @@ class TE:
         self.receiving_yards: int = 0
         self.receiving_touchdowns: int = 0
         self.longest_reception: int = 0
-        self.rushing_attempts: int = 0
-        self.rushing_yards: int = 0
-        self.rushing_touchdowns: int = 0
         self.touches: int = 0
         self.all_purpose_yards: int = 0
         self.fumbles: int = 0
@@ -766,7 +763,29 @@ class TE:
             print(e)
     
     def save_stats(self) -> None:
-        pass
+        directory = "./players/TE/{}_{}/".format(self.name.split()[0], self.name.split()[1]) 
+        if not os.path.exists(directory):
+            os.makedirs(directory)    
+
+        data = {
+            "name": self.name,
+            "number": self.number,
+            "team": self.team,
+            "games_played": self.games_played,
+            "games_started": self.games_started,
+            "targets": self.targets,
+            "receptions": self.receptions,
+            "receiving_yards": self.receiving_yards,
+            "receiving_touchdowns": self.receiving_touchdowns,
+            "longest_reception": self.longest_reception,
+            "touches": self.touches,
+            "all_purpose_yards": self.all_purpose_yards,
+            "fumbles": self.fumbles,
+            "approximate_value": self.approximate_value
+        }
+        
+        with open("{}/{}.yaml".format(directory, self.year), "w") as file:
+            yaml.dump(data, file, default_flow_style=False)
     
     def set_stats_from_cache(self) -> None:
         pass
