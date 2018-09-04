@@ -559,9 +559,8 @@ class RB:
         print("Fumbles: {}".format(self.fumbles))
          
 
-
 class K:
-    def __init__(name: str):
+    def __init__(self, name: str):
         self.name: str = name
         self.number: int = 0
         self.team: str = ""
@@ -577,20 +576,110 @@ class K:
         self.field_goal_attempts_50_plus: int = 0
         self.field_goals_made_50_plus: int = 0
         self.longest_field_goal_made: int = 0
-        self.total_field_goals_attmpted: int = 0
+        self.total_field_goals_attempted: int = 0
         self.total_field_goals_made: int = 0
         self.extra_points_attempted: int = 0
         self.extra_points_made: int = 0
         self.approximate_value: int = 0
     
-    def set_stats(self) -> None:
-        pass
+    def set_stats(self, year: str) -> None:
+        first_letter_lastname = list(self.name.split()[1])[0].upper() # lol so convoluted
+        first_four_lastname = self.name.split()[1][0:4]
+        first_two_firstname = self.name.split()[0][0:2]
+        self.year = year
+
+        if self.is_player_stats_cached():
+            print(">> Player stats cached for year, setting from cache")
+            self.set_stats_from_cache()
+            return
+
+        print(">> Retrieving data from pro-football-reference.com")
+
+        request_url = "https://www.pro-football-reference.com/players/{}/{}{}00.htm".format(first_letter_lastname,
+                                                                                            first_four_lastname,
+                                                                                            first_two_firstname)
+        try:
+            response = requests.get(request_url)
+            soup = BeautifulSoup(response.text, 'html.parser')
+            stats_for_year = soup.find("tr", {"id": "kicking.{}".format(year)})
+            self.number = int(stats_for_year.find("td", {"data-stat": "uniform_number"}).text)
+            self.team = stats_for_year.find("td", {"data-stat": "team"}).find('a').text 
+            self.games_played = int(stats_for_year.find("td", {"data-stat": "g"}).text)
+            self.games_started = int(stats_for_year.find("td", {"data-stat": "gs"}).text)
+            self.field_goal_attempts_20_to_29 = int(stats_for_year.find("td", {"data-stat": "fga2"}).text)
+            self.field_goals_made_20_to_29 = int(stats_for_year.find("td", {"data-stat": "fgm2"}).text)
+            self.field_goal_attempts_30_to_39 = int(stats_for_year.find("td", {"data-stat": "fga3"}).text)
+            self.fields_goals_made_30_to_39 = int(stats_for_year.find("td", {"data-stat": "fgm3"}).text)
+            self.field_goal_attempts_40_to_49 = int(stats_for_year.find("td", {"data-stat": "fga4"}).text)
+            self.field_goals_made_40_to_49 = int(stats_for_year.find("td", {"data-stat": "fgm4"}).text)
+            self.field_goal_attempts_50_plus = int(stats_for_year.find("td", {"data-stat": "fga5"}).text)
+            self.field_goals_made_50_plus = int(stats_for_year.find("td", {"data-stat": "fgm5"}).text)
+            self.longest_field_goal_made = int(stats_for_year.find("td", {"data-stat": "fg_long"}).text)
+            self.total_field_goals_attempted = int(stats_for_year.find("td", {"data-stat": "fga"}).text)
+            self.total_field_goals_made = int(stats_for_year.find("td", {"data-stat": "fgm"}).text)
+            self.extra_points_attempted = int(stats_for_year.find("td", {"data-stat": "xpa"}).text)
+            self.extra_points_made = int(stats_for_year.find("td", {"data-stat": "xpm"}).text)
+            self.approximate_value = int(stats_for_year.find("td", {"data-stat": "av"}).text)
+            self.save_stats()
+        except Exception as e:
+            print(e)
     
     def save_stats(self) -> None:
-        pass
+        directory = "./players/K/{}_{}/".format(self.name.split()[0], self.name.split()[1]) 
+        if not os.path.exists(directory):
+            os.makedirs(directory)    
+
+        data = {
+            "name": self.name,
+            "number": self.number,
+            "team": self.team,
+            "games_played": self.games_played,
+            "games_started": self.games_started,
+            "field_goal_attempts_20_to_29": self.field_goal_attempts_20_to_29,
+            "field_goals_made_20_to_29": self.field_goals_made_20_to_29,
+            "field_goal_attempts_30_to_39": self.field_goal_attempts_30_to_39,
+            "field_goals_made_30_to_39": self.fields_goals_made_30_to_39,
+            "field_goal_attempts_40_to_49": self.field_goal_attempts_40_to_49,
+            "field_goals_made_40_to_49": self.field_goals_made_40_to_49,
+            "field_goal_attempts_50_plus": self.field_goal_attempts_50_plus,
+            "field_goals_made_50_plus": self.field_goals_made_50_plus,
+            "longest_field_goal_made": self.longest_field_goal_made,
+            "total_field_goals_attempted": self.total_field_goals_attempted,
+            "total_field_goals_made": self.total_field_goals_made,
+            "extra_points_attempted": self.extra_points_attempted,
+            "extra_points_made": self.extra_points_made,
+            "approximate_value": self.approximate_value
+        }
+        
+        with open("{}/{}.yaml".format(directory, self.year), "w") as file:
+            yaml.dump(data, file, default_flow_style=False)
     
     def set_stats_from_cache(self) -> None:
-        pass
+        player_file = "./players/K/{}_{}/{}.yaml".format(self.name.split()[0], self.name.split()[1], self.year)
+        
+        with open(player_file, "r") as file:
+            try:
+                yaml_data = yaml.safe_load(file)
+                self.number = yaml_data["number"]
+                self.team = yaml_data["team"]
+                self.games_played = yaml_data["games_played"] 
+                self.games_started = yaml_data["games_started"] 
+                self.field_goal_attempts_20_to_29 = yaml_data["field_goal_attempts_20_to_29"]
+                self.field_goals_made_20_to_29 =  yaml_data["field_goals_made_20_to_29"]
+                self.field_goal_attempts_30_to_39 = yaml_data["field_goal_attempts_30_to_39"]
+                self.field_goals_made_30_to_39 = yaml_data["field_goals_made_30_to_39"] 
+                self.field_goal_attempts_40_to_49 = yaml_data["field_goal_attempts_40_to_49"] 
+                self.field_goals_made_40_to_49 = yaml_data["field_goals_made_40_to_49"]
+                self.field_goal_attempts_50_plus = yaml_data["field_goal_attempts_50_plus"] 
+                self.field_goals_made_50_plus = yaml_data["field_goals_made_50_plus"] 
+                self.longest_field_goal_made = yaml_data["longest_field_goal_made"] 
+                self.total_field_goals_attempted = yaml_data["total_field_goals_attempted"] 
+                self.total_field_goals_made = yaml_data["total_field_goals_made"] 
+                self.extra_points_attempted = yaml_data["extra_points_attempted"] 
+                self.extra_points_made = yaml_data["extra_points_made"] 
+                self.approximate_value = yaml_data["approximate_value"] 
+            except yaml.YAMLError as e:
+                print(e)
     
     def is_player_stats_cached(self) -> bool:
         player_file = Path("./players/K/{}_{}/{}.yaml".format(self.name.split()[0], self.name.split()[1], self.year))
@@ -613,7 +702,7 @@ class K:
         print("Field goal attempts (50+): {}".format(self.field_goal_attempts_50_plus))
         print("Field goals made (50+): {}".format(self.field_goals_made_50_plus))
         print("Longest field goal: {} yd".format(self.longest_field_goal_made))
-        print("Total field goals attempted: {}".format(self.total_field_goals_attmpted))
+        print("Total field goals attempted: {}".format(self.total_field_goals_attempted))
         print("Total field goals mdae: {}".format(self.total_field_goals_made))
         print("Extra points attempted: {}".format(self.extra_points_attempted))
         print("Extra points made: {}".format(self.extra_points_made))
